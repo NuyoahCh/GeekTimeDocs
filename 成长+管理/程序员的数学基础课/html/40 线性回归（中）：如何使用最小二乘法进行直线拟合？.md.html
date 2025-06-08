@@ -1,0 +1,106 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="content-language" content="zh-cn">
+  <meta name="description" content="40 线性回归（中）：如何使用最小二乘法进行直线拟合？">
+  <title>40 线性回归（中）：如何使用最小二乘法进行直线拟合？ </title>
+</head>
+
+<body>
+  <h1>40 线性回归（中）：如何使用最小二乘法进行直线拟合？</h1>
+  <p>你好，我是黄申。</p>
+  <p>上一节，我提到了，求解线性回归和普通的线性方程组最大的不同在于误差ε。在求解线性方程组的时候，我们并不考虑误差的存在，因此存在无解的可能。而线性回归允许误差ε的存在，我们要做的就是尽量把ε最小化，并控制在一定范围之内。这样我们就可以求方程的近似解。而这种近似解对于海量的大数据分析来说是非常重要的。</p>
+  <p>但是现实中的数据一定存在由于各种各样原因所导致的误差，因此即使自变量和因变量之间存在线性关系，也基本上不可能完美符合这种线性关系。总的来说，线性回归分析并不一定需要100%精确，而误差ε的存在可以帮助我们降低对精度的要求。通常，多元线性回归会写作：</p>
+  <p><span class="math inline">\(y=b\_0+b\_1·x\_1+b\_2·x\_2+…+\)</span>- <span class="math inline">\(b\_{n-1}·x\_{n-1}+b\_n·x\_n+ε\)</span></p>
+  <p>这里的<span class="math inline">\(x\_1，x\_2，…，x\_n\)</span>是自变量，<span class="math inline">\(y\)</span>是因变量，<span class="math inline">\(b\_0\)</span>是截距，<span class="math inline">\(b\_1\)</span>，<span class="math inline">\(b\_2\)</span>，…，<span class="math inline">\(b\_n\)</span>是自变量的系数，<span class="math inline">\(ε\)</span>是随机误差。</p>
+  <p>在线性回归中，为了实现最小化<span class="math inline">\(ε\)</span>的目标，我们可以使用最小二乘法进行直线的拟合。最小二乘法通过最小化误差的平方和，来寻找和观测数据匹配的最佳函数。由于这些内容有些抽象，下面我会结合一些例子来解释最小二乘法的核心思想，以及如何使用这种方法进行求解。</p>
+  <h2>使用观测值拟合</h2>
+  <p>在详细阐述最小二乘法之前，我们先来回顾一下第32讲介绍的模型拟合。在监督式学习中，拟合模型其实是指通过模型的假设和训练样本，推导出具体参数的过程。有了这些参数，我们就能对新的数据进行预测。而在线性回归中，我们需要找到观测数据之间的线性关系。</p>
+  <p>假设我们有两个观测数据，对应于二维空间中的两个点，这两个点可以确定唯一的一条直线，两者呈现线性关系。你可以参考下面这张图。</p>
+  <p><img src="assets/b639a6fc2cdd45e89167c2deb87296ee.jpg" alt=""></p>
+  <p>之后，我们又加入了一个点。这个点不在原来的那条直线上。</p>
+  <p><img src="assets/59c8fe70407a4dfbab3010f7354dd6ca.jpg" alt=""></p>
+  <p>这个时候，从线性方程的角度来看，就不存在精确解了。因为没有哪条直线能同时穿过这三个点。这张图片也体现了线性回归分析和求解线性方程组是不一样的，线性回归并不需要求精确解。</p>
+  <p>如果我们加入更多的观察点，就更是如此了。比如下面这张图。</p>
+  <p><img src="assets/9d28b3d3845a4a6fb512d1d8e9cf9def.jpg" alt=""></p>
+  <p>从上图中你应该可以看出，这根直线不是完全精准地穿过这些点，而只是经过了其中两个，大部分点和这根直线有一定距离。这个时候，线性回归就有用武之地了。</p>
+  <p>由于我们假设ε的存在，因此在线性回归中，我们允许某条直线只穿过其中少量的点。不过，既然我们允许这种情况发生，那么就存在无穷多这样的直线。比如下面我随便画了几条，都是可以的。</p>
+  <p><img src="assets/302ede5372e4476c97275e36fdfc8719.jpg" alt=""></p>
+  <p>当然，我们从直觉出发，一定不会选取那些远离这些点的直线，而是会选取尽可能靠近这些点的那些线。比如下面这张图里展示的这两条。</p>
+  <p><img src="assets/68504e24b5a8458392116d3772142862.jpg" alt=""></p>
+  <p>好了，既然这样，我们就需要定义哪根线是最优的，以及在给出了最优的定义之后，如何能求解出这条最优的直线呢？最小二乘法可以回答这两个问题，下面我们具体来看。</p>
+  <h2>最小二乘法</h2>
+  <p>最小二乘法的主要思想就是求解未知参数，使得理论值与观测值之差（即误差，或者说残差）的平方和达到最小。我们可以使用下面这个公式来描述。</p>
+  <p><img src="assets/72651abe9a6141ff9ab2091206afba9e.jpg" alt=""></p>
+  <p>其中，<span class="math inline">\(y\_i\)</span>表示来自数据样本的观测值，而<span class="math inline">\(y\)</span>^是假设的函数的理论值，<span class="math inline">\(ε\)</span>就是我们之前提到的误差，在机器学习中也常被称为损失函数，它是观测值和真实值之差的平方和。最小二乘法里的“二乘”就是指的平方操作。有了这个公式，我们的目标就很清楚了，就是要发现使ε最小化时候的参数。</p>
+  <p>那么最小二乘法是如何利用最小化<span class="math inline">\(ε\)</span>的这个条件来求解的呢？让我们从矩阵的角度出发来理解整个过程。</p>
+  <p>有了上面的定义之后，我们就可以写出最小二乘问题的矩阵形式。</p>
+  <p><span class="math inline">\(min||XB-Y||\_{2}^{2}\)</span></p>
+  <p>其中<span class="math inline">\(B\)</span>为系数矩阵，<span class="math inline">\(X\)</span>为自变量矩阵，<span class="math inline">\(Y\)</span>为因变量矩阵。换句话说，我们要在向量空间中，找到一个<span class="math inline">\(B\)</span>，使向量<span class="math inline">\(XB\)</span>与<span class="math inline">\(Y\)</span>之间欧氏距离的平方数最小的<span class="math inline">\(B\)</span>。</p>
+  <p>结合之前所讲的矩阵点乘知识，我们把上述式子改写为：</p>
+  <p><span class="math inline">\(||XB-Y||\_{2}^{2}=tr((XB-Y)'(XB-Y))\)</span></p>
+  <p>其中<span class="math inline">\((XB-Y)'\)</span>表示矩阵<span class="math inline">\((XB-Y)\)</span>的转置。而<span class="math inline">\(tr()\)</span>函数表示取对角线上所有元素的和，对于某个矩阵<span class="math inline">\(A\)</span>来说，<span class="math inline">\(tr(A)\)</span>的值计算如下：</p>
+  <p><img src="assets/46e9b4221d254851a039d80e26cde79b.jpg" alt=""></p>
+  <p>进一步，根据矩阵的运算法则，我们有：</p>
+  <p><span class="math inline">\(tr((XB-Y)‘(XB-Y))\)</span>- <span class="math inline">\(=tr(B’X’-Y’)(XB-Y)\)</span>- <span class="math inline">\(=tr(B’X’XB-B’X’Y-Y’XB+Y’Y)\)</span></p>
+  <p>因此我们可以得到：</p>
+  <p><span class="math inline">\(||XB-Y||\_{2}^{2}\)</span>- <span class="math inline">\(=tr((XB-Y)‘(XB-Y))\)</span>- <span class="math inline">\(=tr(B’X’-Y’)(XB-Y)\)</span>- <span class="math inline">\(=tr(B’X’XB-B’X’Y-Y’XB+Y’Y)\)</span></p>
+  <p>我们知道，求最极值问题直接对应的就是导数为0，因此我对上述的矩阵形式进行求导，得到如下的式子：</p>
+  <p><span class="math inline">\(\\frac{d||XB-Y||\_{2}^{2}}{dB}\)</span>- <span class="math inline">\(=\\frac{d(tr(B’X’XB-B’X’Y-Y’XB+Y’Y))}{dB}\)</span>- <span class="math inline">\(=X’XB+X’XB-X’Y-X’Y\)</span>- <span class="math inline">\(=2X’XB-2X’Y\)</span></p>
+  <p>如果要<span class="math inline">\(||XB-Y||\_{2}^{2}\)</span>最小，就要满足两个条件。</p>
+  <p>第一个条件是<span class="math inline">\(\\frac{d||XB-Y||\_{2}^{2}}{dB}\)</span>为0，也就是<span class="math inline">\(2X’XB-2X’Y=0\)</span>。</p>
+  <p>第二个条件是<span class="math inline">\(\\frac{d(2X’XB-2X’Y)}{dB}&gt;0\)</span>。</p>
+  <p>由于<span class="math inline">\(\\frac{d(2X’XB-2X’Y)}{dB}=2X’X&gt;0\)</span>，所以，第二个条件是满足的。只要<span class="math inline">\(2X’XB=2X’Y\)</span>。</p>
+  <p>我们就能获得<span class="math inline">\(ε\)</span>的最小值。从这个条件出发，我们就能求出矩阵<span class="math inline">\(B\)</span>：</p>
+  <p><span class="math inline">\(2X’XB=2X’Y\)</span>- <span class="math inline">\(X’XB=X’Y\)</span>- <span class="math inline">\((X’X)^{-1}X’XB=(X’X)^{-1}X’Y\)</span>- <span class="math inline">\(IB=(X’X)^{-1}X’Y\)</span>- <span class="math inline">\(B=(X’X)^{-1}X’Y\)</span></p>
+  <p>其中<span class="math inline">\(I\)</span>为单位矩阵。而<span class="math inline">\((X’X)^{-1}\)</span>表示<span class="math inline">\(X’X\)</span>的逆矩阵。所以，最终系数矩阵为：</p>
+  <p><span class="math inline">\(B=(X’X)^{-1}X’Y\)</span></p>
+  <h2>补充证明和解释</h2>
+  <p>为了保持推导的连贯性，在上述的推导过程中，我跳过了几个步骤的证明。下面我会给出详细的解释，供你更深入的学习和研究。</p>
+  <h3>步骤a：</h3>
+  <p><span class="math inline">\((XB)‘=B’X’\)</span></p>
+  <h3>证明：</h3>
+  <p>对于<span class="math inline">\(XB\)</span>中的每个元素<span class="math inline">\(xb\_{i,j}\)</span>，有：</p>
+  <p><img src="assets/e01d2b94fd7f4b23b1d4e0b9a67048a5.jpg" alt=""></p>
+  <p>而对于<span class="math inline">\((XB)‘\)</span>中的每个元素<span class="math inline">\(xb’\_{i,j}\)</span>，有：</p>
+  <p><img src="assets/994d389fcdfa46bebad19eacfac2a7e3.jpg" alt=""></p>
+  <p>对于<span class="math inline">\(B’\)</span>中的每个元素有：</p>
+  <p><span class="math inline">\(b’_{i,k}=b_{k,i}\)</span></p>
+  <p><span class="math inline">\(X’\)</span>中的每个元素有：</p>
+  <p><span class="math inline">\(x’_{k,j}=x_{j,k}\)</span></p>
+  <p>那么，对于<span class="math inline">\(B’X’\)</span>中的每个元素<span class="math inline">\(b’x’\_{i,j}\)</span>，就有：</p>
+  <p><img src="assets/c123d0c2a4a244a2aa29c86a21640680.jpg" alt=""></p>
+  <p>所以有<span class="math inline">\((XB)’ = B’X’\)</span>。</p>
+  <h3>步骤b：</h3>
+  <p><span class="math inline">\((XB-Y)‘=B’X’-Y’\)</span></p>
+  <h3>证明：</h3>
+  <p>和步骤a类似，对于<span class="math inline">\(XB-Y\)</span>中的每个元素 <span class="math inline">\(xb-y’\_{i,j}\)</span>有：</p>
+  <h3>步骤c：</h3>
+  <p><span class="math inline">\(\\frac{d(tr(B’X’Y))}{dB}=X’Y\)</span></p>
+  <h3>证明：</h3>
+  <p><img src="assets/40772067ce28456aa9a95125664c204c.jpg" alt=""></p>
+  <p>同理，可以证明：</p>
+  <p><span class="math inline">\(\\frac{d(tr(Y’XB))}{dB}=(Y’X)'=X’Y\)</span></p>
+  <h3>步骤d：</h3>
+  <p><span class="math inline">\(\\frac{d(tr(B’X’XB))}{dB}=2X’XB\)</span></p>
+  <h3>证明：</h3>
+  <p><span class="math inline">\(\\frac{d(tr(B’X’XB))}{dB}\)</span>- <span class="math inline">\(=\\frac{d(tr(B’(X’XB)))}{dB}+\\frac{d(tr((B’X’X)B))}{dB}\)</span>- <span class="math inline">\(=(X’XB)+(B’X’X)'\)</span>- <span class="math inline">\(=X’XB+X’XB\)</span>- <span class="math inline">\(=2X’XB\)</span></p>
+  <h3>步骤e：</h3>
+  <p>常量对于变量求导为0，例如：</p>
+  <p><span class="math inline">\(\\frac{d(Y’Y)}{dB}=0\)</span></p>
+  <p>好了，弄明白了这些细节上的证明，你就能更好地理解最小二乘法中的推导步骤。不过，你可能还是会奇怪，为什么最终要对矩阵求导数来求ε的最小值。最后，我们就聊聊如何使用求导获取极小值。</p>
+  <p>极值是一个函数的极大值或极小值。如果一个函数在一点的某个邻域内每个地方都有确定的值，而该点所对应的值是最大（小）的，那么这函数在该点的值就是一个极大（小）值。而函数的极值可以通过它的一阶和二阶导数来确定。</p>
+  <p>对于一元可微函数<span class="math inline">\(f(x)\)</span>，它在某点<span class="math inline">\(x\_0\)</span>有极值的充分必要条件是<span class="math inline">\(f(x)\)</span>在<span class="math inline">\(x\_0\)</span>的邻域上一阶可导，在<span class="math inline">\(x\_0\)</span>处二阶可导，且一阶导数<span class="math inline">\(f’(x\_0)=0\)</span>，二阶导数<span class="math inline">\(f’‘(x\_0)≠0\)</span>。其中<span class="math inline">\(f’\)</span>和<span class="math inline">\(f’'\)</span>分别表示一阶导数和二阶导数。</p>
+  <p>在一阶导数<span class="math inline">\(f’(x0)=0\)</span>的情况下，如果<span class="math inline">\(f’‘(x0)&lt;0\)</span>，则<span class="math inline">\(f\)</span>在<span class="math inline">\(x\_0\)</span>取得极大值；如果<span class="math inline">\(f’'(x0)&gt;0\)</span>，则<span class="math inline">\(f\)</span>在<span class="math inline">\(x\_0\)</span>取得极小值。这就是为什么在求矩阵<span class="math inline">\(B\)</span>的时候，我们要求<span class="math inline">\(2X’XB-2X’Y\)</span>为<span class="math inline">\(0\)</span>，并且<span class="math inline">\(2X’XB-2X’Y\)</span>的导数要大于<span class="math inline">\(0\)</span>，这样我们才能确保求得极小值。</p>
+  <h2>总结</h2>
+  <p>今天我们探讨了为什么简单的线性方程组无法满足线性函数拟合的需求，最主要的原因就是现实的观测数据往往不是精确的线性关系，存在一定的误差。我们所要做的就是，在允许一定范围的误差前提下，找到一种线性关系，尽量的满足观察数据，使得我们所定义的误差最小。</p>
+  <p>最小二乘法通过向量空间的欧氏距离之平方，定义了预测值和真实值之间的误差。在给定自变量和因变量的观测值之后，最小二乘法可以帮助我们推导出所有自变量的系数，并最小化误差。我使用矩阵的形式，为你推导了整个过程。</p>
+  <p>不过，到目前为止，我们都只是从理论上理解最小二乘法，可能你还没有太深的感触。下一节，我会通过一个具体的例子来逐步进行演算，并使用Python代码对最终的结果进行验证。</p>
+  <h2>思考题</h2>
+  <p>还记得在29讲的线性回归案例吗？我们使用了Boston Housing的数据，拟合出了十多个自变量的系数。请使用这些系数，计算train.csv中所有样本因变量预测值和真实值之间的误差。你可以使用Python代码来实现一下。</p>
+  <p>欢迎留言和我分享，也欢迎你在留言区写下今天的学习笔记。你可以点击“请朋友读”，把今天的内容分享给你的好友，和他一起精进。</p>
+</body>
+
+</html>
